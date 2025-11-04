@@ -12,6 +12,7 @@ build/
 .Python
 env/
 venv/
+venv_new/
 .venv/
 ENV/
 env.bak/
@@ -36,7 +37,6 @@ Thumbs.db
 /.vscode/
 *.code-workspace
 # Ignore model weights / large artifacts
-models/
 checkpoints/
 # Ignore notebooks output if added later
 *.ipynb_checkpoints/
