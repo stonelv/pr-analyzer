@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # GitLab integration
     GITLAB_BASE_URL: AnyHttpUrl | None = "https://gitlab.com/zhe.lv.82/agri-picking-robot.git"
-    GITLAB_TOKEN: Optional[str] = "glpat-ZGQ1TBZDwPZ8FYQixdBoh286MQp1OmlvcXloCw.01.120ld8rp0"
+    GITLAB_TOKEN: Optional[str] = ""
 
     # Kafka
     KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
