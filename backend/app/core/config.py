@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     DISABLE_EMBEDDING: bool = False
 
     # GitLab integration
-    GITLAB_BASE_URL: AnyHttpUrl | None = None
-    GITLAB_TOKEN: Optional[str] = None
+    GITLAB_BASE_URL: AnyHttpUrl | None = "https://gitlab.com/zhe.lv.82/agri-picking-robot.git"
+    GITLAB_TOKEN: Optional[str] = ""
 
     # Kafka
     KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
