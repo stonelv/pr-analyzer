@@ -1,3 +1,5 @@
 from .base import Base
+from .pull_request import PullRequest, PullRequestRisk
 
-# 在这里可以导入其他模型类
+# 导出所有模型类
+__all__ = ["Base", "PullRequest", "PullRequestRisk"]

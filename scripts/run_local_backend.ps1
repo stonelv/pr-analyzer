@@ -30,4 +30,4 @@ if ($env:LOCAL_MODE -and (Test-Path 'backend/requirements-local.txt')) {
     Write-Host "[run_local_backend] Installing full requirements" -ForegroundColor Cyan
     pip install -r backend/requirements.txt | Write-Host
 }
-python -c "import uvicorn; from backend.app.main import app; uvicorn.run(app, host='0.0.0.0', port=8000)"
+python -c "import uvicorn; from backend.app.main import app; uvicorn.run(app, host='0.0.0.0', port=8080)"
