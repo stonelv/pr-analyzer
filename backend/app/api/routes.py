@@ -3,7 +3,15 @@ from ..core.db import get_db
 from ..core.config import settings
 from sqlalchemy.orm import Session
 from ..models import PullRequest, PullRequestRisk, Base
-from ..services.risk import compute_risk
+from ..services import (
+    analyze_complexity,
+    detect_dependency_changes,
+    detect_code_duplication,
+    analyze_test_coverage,
+    scan_security_vulnerabilities,
+    analyze_collaboration,
+    compute_risk
+)
 
 router = APIRouter()
 
@@ -15,6 +23,84 @@ async def health_check():
 async def env_info():
     from ..core.config import settings
     return {"env": settings.ENV, "app": settings.APP_NAME}
+
+@router.post("/analyze/complexity")
+async def analyze_code_complexity(request: Request):
+    """Analyze code complexity for a given code snippet."""
+    payload = await request.json()
+    code = payload.get("code", "")
+    language = payload.get("language", "python")
+    
+    if not code:
+        raise HTTPException(status_code=400, detail="Code snippet is required")
+    
+    result = analyze_complexity(code, language)
+    return {"status": "success", "result": result}
+
+@router.post("/analyze/test-coverage")
+async def analyze_test_coverage_endpoint(request: Request):
+    """Analyze test coverage changes between baseline and PR."""
+    payload = await request.json()
+    baseline_coverage = payload.get("baseline_coverage", {})
+    pr_coverage = payload.get("pr_coverage", {})
+    
+    if not baseline_coverage or not pr_coverage:
+        raise HTTPException(status_code=400, detail="Both baseline_coverage and pr_coverage are required")
+    
+    result = analyze_test_coverage(baseline_coverage, pr_coverage)
+    return {"status": "success", "result": result}
+
+@router.post("/analyze/dependency-changes")
+async def detect_dependency_changes_endpoint(request: Request):
+    """Detect dependency changes between baseline and PR."""
+    payload = await request.json()
+    baseline_deps = payload.get("baseline_deps", {})
+    pr_deps = payload.get("pr_deps", {})
+    
+    if not baseline_deps or not pr_deps:
+        raise HTTPException(status_code=400, detail="Both baseline_deps and pr_deps are required")
+    
+    result = detect_dependency_changes(baseline_deps, pr_deps)
+    return {"status": "success", "result": result}
+
+@router.post("/analyze/security-scan")
+async def scan_security_vulnerabilities_endpoint(request: Request):
+    """Scan code for security vulnerabilities and code defects."""
+    payload = await request.json()
+    code = payload.get("code", "")
+    language = payload.get("language", "python")
+    
+    if not code:
+        raise HTTPException(status_code=400, detail="Code snippet is required")
+    
+    result = scan_security_vulnerabilities(code, language)
+    return {"status": "success", "result": result}
+
+@router.post("/analyze/code-duplication")
+async def detect_code_duplication_endpoint(request: Request):
+    """Detect duplicate code fragments in the given code."""
+    payload = await request.json()
+    code = payload.get("code", "")
+    language = payload.get("language", "python")
+    min_lines = payload.get("min_lines", 3)
+    
+    if not code:
+        raise HTTPException(status_code=400, detail="Code snippet is required")
+    
+    result = detect_code_duplication(code, language, min_lines)
+    return {"status": "success", "result": result}
+
+@router.post("/analyze/collaboration")
+async def analyze_collaboration_endpoint(request: Request):
+    """Analyze PR comments for collaboration efficiency."""
+    payload = await request.json()
+    comments = payload.get("comments", [])
+    
+    if not comments:
+        raise HTTPException(status_code=400, detail="Comments list is required")
+    
+    result = analyze_collaboration(comments)
+    return {"status": "success", "result": result}
 
 @router.post("/gitlab/webhook")
 async def gitlab_webhook(
@@ -63,3 +149,14 @@ async def gitlab_webhook(
     db.add(pr_risk)
     db.commit()
     return {"status": "processed", "pr_id": pr.id, "risk": risk}
+
+@router.post("/gitlab/prs")
+async def get_gitlab_prs(repo_name: str, token: str):
+    try:
+        # Import here to avoid circular dependencies if needed
+        from ..services.gitlab import GitLabService
+        gitlab_service = GitLabService()
+        prs = await gitlab_service.get_merge_requests(repo_name, token)
+        return {"prs": prs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
