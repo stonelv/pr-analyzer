@@ -31,38 +31,41 @@ docs/           # 设计文档
 
 ## 快速启动 (开发环境)
 
-### 1. 启动依赖与后端
-```bash
-cd infra/docker
-docker compose up -d --build
+### 1. 配置环境变量
+创建 `.env.local` 文件并配置 GitLab 信息：
 ```
-访问: http://localhost:8000/api/healthz
-
-### 2. 创建 MinIO bucket
-登录 MinIO console: http://localhost:9001 使用默认凭证 `minioadmin/minioadmin` 创建 `diff-snapshots`。
-
-### 3. pgvector 扩展安装
-进入 postgres 容器执行:
-```bash
-docker exec -it postgres psql -U pr_user -d pr_analyzer -c 'CREATE EXTENSION IF NOT EXISTS vector;'
-```
-
-### (无 Docker 本地运行 Backend)
-适用于仅需启动 API 做开发调试的场景：
-1. 创建本地环境文件 `.env.local`（可选）：
-```
+ENV=dev
 LOCAL_MODE=true
 DISABLE_KAFKA=true
 DISABLE_MINIO=true
 DISABLE_EMBEDDING=true
 LOG_LEVEL=INFO
+GITLAB_BASE_URL=https://gitlab.mycwt.com.cn
+GITLAB_TOKEN=your_gitlab_token_here
 ```
-2. 运行 PowerShell 脚本：
+
+### 2. 启动后端服务
+运行 PowerShell 脚本：
 ```powershell
 pwsh scripts/run_local_backend.ps1
 ```
-3. 访问: http://localhost:8000/api/healthz
+访问: http://localhost:8080/api/healthz
 默认使用 SQLite `./data/local.db`，无需 Postgres/Kafka/MinIO。
+
+### 3. 测试 API 端点
+使用提供的测试脚本验证 API 功能：
+```bash
+python test_real_pr.py
+```
+该脚本将从 GitLab 获取真实 PR 数据并测试所有 API 端点。
+
+### (Docker 完整环境)
+如需完整环境（包含依赖服务）：
+```bash
+cd infra/docker
+docker compose up -d --build
+```
+访问: http://localhost:8000/api/healthz
 
 Windows 安装提示：如需连接 Postgres，请确保已安装官方 PostgreSQL 并将 `pg_config` 所在目录加入 PATH；项目已改用 `psycopg` 以减少编译问题。本地仅调试可使用 `requirements-local.txt` 避免多余依赖。
 
@@ -72,6 +75,11 @@ Windows 安装提示：如需连接 Postgres，请确保已安装官方 PostgreS
 - 拉取请求数据存储与风险历史记录
 - 本地模式支持（无需外部依赖）
 - 文件/函数复杂度分析 API
+- 测试覆盖率分析：检测PR对测试覆盖率的影响，识别未测试的新代码
+- 依赖变更检测：监控PR中的依赖库变更，提示安全风险和兼容性问题
+- 安全漏洞扫描：自动检测PR中引入的安全漏洞和代码缺陷
+- 代码重复检测：识别PR中的重复代码片段，帮助保持代码简洁性
+- 协作效率提升：PR评论智能分类、行动项提取，加速代码评审流程
 
 
 ## 后续开发建议
@@ -98,6 +106,26 @@ Windows 安装提示：如需连接 Postgres，请确保已安装官方 PostgreS
 ### 代码复杂度分析
 - `POST /api/analyze/complexity` 分析代码片段的复杂度
   - 参数: `code` (代码片段), `language` (编程语言, 默认: python)
+
+### 测试覆盖率分析
+- `POST /api/analyze/test-coverage` 分析PR对测试覆盖率的影响
+  - 参数: `baseline_coverage` (基线覆盖率数据), `pr_coverage` (PR覆盖率数据)
+
+### 依赖变更检测
+- `POST /api/analyze/dependency-changes` 检测PR中的依赖库变更
+  - 参数: `baseline_deps` (基线依赖), `pr_deps` (PR依赖)
+
+### 安全漏洞扫描
+- `POST /api/analyze/security-scan` 扫描代码中的安全漏洞和缺陷
+  - 参数: `code` (代码片段), `language` (编程语言, 默认: python)
+
+### 代码重复检测
+- `POST /api/analyze/code-duplication` 检测代码中的重复片段
+  - 参数: `code` (代码片段), `language` (编程语言, 默认: python), `min_lines` (最小重复行数, 默认: 3)
+
+### 协作效率分析
+- `POST /api/analyze/collaboration` 分析PR评论的协作效率
+  - 参数: `comments` (评论列表)
   - 返回: 行数、函数数、类数、圈复杂度、Halstead 体积、复杂度等级等信息
 
 ## 风险评分机制

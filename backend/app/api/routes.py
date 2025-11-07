@@ -149,3 +149,14 @@ async def gitlab_webhook(
     db.add(pr_risk)
     db.commit()
     return {"status": "processed", "pr_id": pr.id, "risk": risk}
+
+@router.post("/gitlab/prs")
+async def get_gitlab_prs(repo_name: str, token: str):
+    try:
+        # Import here to avoid circular dependencies if needed
+        from ..services.gitlab import GitLabService
+        gitlab_service = GitLabService()
+        prs = await gitlab_service.get_merge_requests(repo_name, token)
+        return {"prs": prs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
